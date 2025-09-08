@@ -1,33 +1,28 @@
-export default function CurriculoPage() {
+import Header from '../components/Header';
+import Markdown from '../components/Markdown';
+import fs from 'fs/promises';
+import path from 'path';
+
+export const metadata = { title: 'Currículo • Diego Santos' };
+
+export default async function CurriculoPage() {
+  // o app roda dentro de /portfolio; o ABOUT.me.md está na raiz do repo
+  const repoRoot = path.join(process.cwd(), '..');
+  const aboutPath = path.join(repoRoot, 'ABOUT.me.md');
+
+  let md = '# Currículo\n(arquivo ABOUT.me.md não encontrado)';
+  try {
+    md = await fs.readFile(aboutPath, 'utf-8');
+  } catch (e) {
+    // mantém fallback
+  }
+
   return (
-    <main style={{ padding: 24 }}>
-      <h1>Currículo — Diego G. (SigmaEazy)</h1>
-      <p>Eng. de Computação (estudante) • Dev/Arquiteto • Gota Ecosystem</p>
-
-      <h2>Resumo</h2>
-      <ul>
-        <li>Full-stack (TypeScript/Next.js, Python/FastAPI).</li>
-        <li>Arquitetura de microsserviços (GitHub Actions + DO). GCP como fallback.</li>
-        <li>IA aplicada (trading signals, normalização de catálogo, moderação de fórum).</li>
-      </ul>
-
-      <h2>Habilidades</h2>
-      <ul>
-        <li>TypeScript, React/Next.js, Tailwind.</li>
-        <li>Python, FastAPI, Pandas.</li>
-        <li>CI/CD (GitHub Actions), Docker.</li>
-        <li>MongoDB/Firestore, BigQuery (analytics).</li>
-      </ul>
-
-      <h2>Educação</h2>
-      <p>Engenharia de Computação — em andamento.</p>
-
-      <h2>Contato</h2>
-      <ul>
-        <li>GitHub: <a href="https://github.com/sigmaeazy" target="_blank">sigmaeazy</a></li>
-        <li>LinkedIn: <a href="#" target="_blank">link do seu perfil</a></li>
-        <li>E-mail: seu@dominio.dev</li>
-      </ul>
-    </main>
+    <>
+      <Header />
+      <main style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
+        <Markdown source={md} />
+      </main>
+    </>
   );
 }

@@ -1,0 +1,50 @@
+name: "Novo certificado"
+description: "Anexe o PDF e informe os metadados. A automação cria um PR com o arquivo."
+title: "[Certificado] <título do certificado>"
+labels: ["certificado"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Como usar**
+        1) Preencha os campos abaixo.
+        2) **Anexe o PDF** (arraste o arquivo para o campo “Arquivo (PDF)”).
+        3) Envie o issue. A automação irá abrir um PR com o PDF e metadados.
+  - type: input
+    id: titulo
+    attributes:
+      label: "Título"
+      placeholder: "Ex.: Google Cloud Fundamentals"
+    validations:
+      required: true
+  - type: input
+    id: emissor
+    attributes:
+      label: "Emissor"
+      placeholder: "Ex.: Google / Coursera / Microsoft / etc."
+    validations:
+      required: true
+  - type: input
+    id: data
+    attributes:
+      label: "Data (YYYY-MM-DD)"
+      placeholder: "2025-09-08"
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: "URL público (opcional)"
+      placeholder: "Link para verificação/credly/etc."
+    validations:
+      required: false
+  - type: textarea
+    id: arquivo
+    attributes:
+      label: "Arquivo (PDF) — anexe aqui"
+      description: "Arraste o PDF para este campo. O GitHub vai inserir um link https://github.com/user-attachments/files/.../arquivo.pdf"
+      placeholder: "Após anexar, um link .pdf aparecerá aqui."
+    validations:
+      required: true
+
+   #https://github.com/sigmaeazy/gota-ecosystem/issues/new?template=novo_certificado.yml

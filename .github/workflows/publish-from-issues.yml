@@ -1,0 +1,75 @@
+
+---
+
+# 3) GitHub Action que converte Issues → JSON e abre PR
+
+**`.github/workflows/publish-from-issues.yml`**
+```yaml
+name: Publish content from Issues
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  publish:
+    if: contains(join(github.event.issue.labels.*.name, ','), 'publish')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update JSON from Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(l => l.name);
+
+            // Decide o alvo
+            let target;
+            if (labels.includes('update')) target = 'portfolio/src/data/updates.json';
+            else if (labels.includes('certificado')) target = 'portfolio/src/data/certificates.json';
+            else if (labels.includes('projeto')) target = 'portfolio/src/data/projects.json';
+            else core.setFailed('Label de conteúdo não encontrada');
+
+            // Esperamos um bloco ```json ... ```
+            const m = issue.body && issue.body.match(/```json([\s\S]*?)```/i);
+            if (!m) core.setFailed('Não encontrei bloco JSON na issue');
+
+            const entry = JSON.parse(m[1]);
+            fs.mkdirSync(path.dirname(target), { recursive: true });
+
+            let arr = [];
+            if (fs.existsSync(target)) {
+              arr = JSON.parse(fs.readFileSync(target, 'utf8') || '[]');
+            }
+
+            // dedupe
+            const key = (o) => (o.slug || `${o.name}-${o.year||''}`).toLowerCase();
+            const k = key(entry);
+            arr = arr.filter(x => key(x) !== k);
+            arr.push(entry);
+
+            if (target.includes('updates.json')) {
+              arr.sort((a,b)=> new Date(b.date)-new Date(a.date));
+            } else if (target.includes('certificates.json')) {
+              arr.sort((a,b)=> (b.year||0)-(a.year||0));
+            }
+
+            fs.writeFileSync(target, JSON.stringify(arr, null, 2));
+            core.summary.addRaw(`Atualizado: ${target}`).write();
+
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "content: atualizar a partir da issue #${{ github.event.issue.number }}"
+          title: "Publicar conteúdo (issue #${{ github.event.issue.number }})"
+          body: "Gerado automaticamente a partir da issue."
+          branch: "content/issue-${{ github.event.issue.number }}"
+          labels: "site,auto-pr"
