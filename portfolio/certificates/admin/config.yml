@@ -1,0 +1,28 @@
+backend:
+  name: github
+  repo: sigmaeazy/gota-ecosystem
+  branch: main
+  # OAuth app do GitHub
+  base_url: https://<SEU-OAUTH-PROXY>         # ver passo 2
+  auth_endpoint: /oauth/authorize
+
+media_folder: "portfolio/public/certificates" # onde os PDFs vão no repo
+public_folder: "/certificates"                # URL pública no site
+
+site_url: https://sigmaeazy.github.io/gota-ecosystem
+logo_url: /logo.svg
+
+collections:
+  - name: "certificates"
+    label: "Certificados"
+    label_singular: "Certificado"
+    folder: "portfolio/content/certificates"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Título", name: "title", widget: "string" }
+      - { label: "Emissor", name: "issuer", widget: "string" }
+      - { label: "Data", name: "date", widget: "datetime", format: "YYYY-MM-DD" }
+      - { label: "Arquivo (PDF)", name: "file", widget: "file", allow_multiple: false }
+      - { label: "URL opcional", name: "url", widget: "string", required: false }
+      - { label: "Descrição", name: "body", widget: "markdown", required: false }

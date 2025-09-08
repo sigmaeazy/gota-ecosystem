@@ -1,0 +1,26 @@
+[
+  {
+    "slug": "gota-trading",
+    "title": "Gota-Trading",
+    "summary": "Bot de trading (cripto/USDBRL/B3) com IA de sinais e backtesting.",
+    "stack": ["Python", "FastAPI", "Binance/MT5", "BigQuery"],
+    "url": "https://github.com/sigmaeazy/gota-ecosystem",
+    "status": "MVP em construção"
+  },
+  {
+    "slug": "gota-drop",
+    "title": "Gota-Drop",
+    "summary": "Dropshipping com fornecedores por API, catálogo normalizado e split.",
+    "stack": ["FastAPI", "Mongo/Firestore", "Stripe/Mercado Pago"],
+    "url": "https://github.com/sigmaeazy/gota-ecosystem",
+    "status": "Design e primeiras integrações"
+  },
+  {
+    "slug": "sigmaeazy",
+    "title": "SigmaEazy (Fórum/IA)",
+    "summary": "IA persona + comunidade, conteúdo automático e moderação.",
+    "stack": ["NodeBB/Discourse", "OpenAI/Gemini", "Firebase"],
+    "url": "/forum",
+    "status": "Protótipo"
+  }
+]
