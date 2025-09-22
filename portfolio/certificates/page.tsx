@@ -1,5 +1,5 @@
-import Card from '../../components/Card';
-import data from '../../../certificates/list.json';
+import Card from '../src/app/components/Card';
+import data from './list.json';
 
 type Cert = { title: string; org: string; link?: string; year?: string };
 

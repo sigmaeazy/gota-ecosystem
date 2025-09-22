@@ -1,83 +1,77 @@
+import fs from 'fs';
+import path from 'path';
+import matter from 'gray-matter';
+import { Project } from '@/data/projects';
+import Markdown from '@/app/components/Markdown'; // O componente que renderiza Markdown
 
-import path from "node:path";
-import * as fs from "node:fs/promises";
-import Link from "next/link";
-import Header from "../../components/Header";
-import { projects } from "../../../data/projects";
+// Função para buscar os dados de UM projeto específico pelo seu slug (nome do arquivo)
+const getProjectData = (slug: string): { project: Project; content: string } | null => {
+  const filePath = path.join(process.cwd(), 'public/content/projects', `${slug}.md`);
 
-async function loadMd(p?: string) {
-  if (!p) return null;
-  if (!p.startsWith("/content/")) return null;
-  const file = path.join(process.cwd(), "public", p);
-  try {
-    return await fs.readFile(file, "utf8");
-  } catch {
+  // Verifica se o arquivo para o slug solicitado realmente existe
+  if (!fs.existsSync(filePath)) {
     return null;
   }
-}
 
+  const fileContents = fs.readFileSync(filePath, 'utf8');
+  const { data, content } = matter(fileContents); // Separa os metadados (data) do conteúdo principal (content)
+
+  const project = {
+    slug: data.slug || slug,
+    name: data.name,
+    summary: data.summary,
+    stack: data.stack ? String(data.stack).split(',').map((item: string) => item.trim()) : [],
+    href: data.href,
+    status: data.status,
+    detailsMd: content,
+  } as Project;
+
+  return { project, content };
+};
+
+// Função para gerar as páginas estáticas no momento do build
 export async function generateStaticParams() {
-  return projects.map((p) => ({ slug: p.slug }));
+  const projectsDirectory = path.join(process.cwd(), 'public/content/projects');
+  if (!fs.existsSync(projectsDirectory)) return [];
+  
+  const fileNames = fs.readdirSync(projectsDirectory);
+  return fileNames.map((fileName) => ({
+    slug: fileName.replace(/\.md$/, ''),
+  }));
 }
 
-export default async function ProjectPage({ params }: { params: { slug: string } }) {
-  const project = projects.find((p) => p.slug === params.slug);
-  if (!project) {
-    return (
-      <>
-        <Header />
-        <main style={{ padding: 24 }}>
-          <p>Projeto não encontrado.</p>
-          <Link href="/projetos">← Voltar</Link>
-        </main>
-      </>
-    );
+// O componente da página
+export default function ProjectDetailsPage({ params }: { params: { slug: string } }) {
+  const { slug } = params;
+  const projectData = getProjectData(slug);
+
+  if (!projectData) {
+    return <div style={{ textAlign: 'center', marginTop: '4rem' }}><h1>404</h1><p>Projeto não encontrado.</p></div>;
   }
-  const md = await loadMd(project.detailsMd);
+
+  const { project, content } = projectData;
 
   return (
-    <>
-      <Header />
-      <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-        <Link href="/projetos">← Voltar</Link>
-        <h1 style={{ marginTop: 12 }}>{project.name}</h1>
-        <p style={{ color: "#9aa0a6" }}>{project.summary}</p>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          {project.stack.map((s) => (
-            <span key={s} style={{ border: "1px solid #333", padding: "4px 8px", borderRadius: 999 }}>
-              {s}
-            </span>
-          ))}
-          <span
-            style={{ marginLeft: "auto", border: "1px solid #333", padding: "4px 8px", borderRadius: 999 }}
-          >
-            {project.status}
+    <article className="card" style={{ padding: '2rem' }}>
+      <h1 style={{ fontSize: '3rem', color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '1rem' }}>
+        {project.name}
+      </h1>
+      <p style={{ marginTop: '0.5rem', color: '#aaa', fontSize: '1.2rem' }}>
+        {project.summary}
+      </p>
+      
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '1.5rem 0' }}>
+        {project.stack.map((tech) => (
+          <span key={tech} className="tag">
+            {tech}
           </span>
-        </div>
+        ))}
+      </div>
 
-        <a
-          href={project.href}
-          target="_blank"
-          rel="noreferrer"
-          style={{ display: "inline-block", border: "1px solid #333", padding: "8px 12px", borderRadius: 10 }}
-        >
-          Repositório ↗
-        </a>
-
-        {/* Render MD puro (simples); mermaid será ativado via script no /diagramas */}
-        {md && (
-          <article
-            style={{ marginTop: 18, borderTop: "1px solid #222", paddingTop: 12 }}
-            dangerouslySetInnerHTML={{ __html: md
-              .replace(/^# (.*$)/gim, "<h2>$1</h2>")
-              .replace(/^## (.*$)/gim, "<h3>$1</h3>")
-              .replace(/\*\*(.*?)\*\*/gim, "<strong>$1</strong>")
-              .replace(/\n$/gim, "<br/>")
-            }}
-          />
-        )}
-        {!md && <p style={{ marginTop: 18, opacity: .7 }}>Sem documento detalhado (MD).</p>}
-      </main>
-    </>
+      {/* Aqui a mágica acontece: renderizamos o conteúdo do Markdown */}
+      <div className="prose" style={{ color: '#ddd', lineHeight: '1.8' }}>
+        <Markdown content={content} />
+      </div>
+    </article>
   );
 }

@@ -1,60 +1,64 @@
-import Header from '../components/Header';
-import { projects } from '../../data/projects';
+import fs from 'fs';
+import path from 'path';
+import matter from 'gray-matter';
+import ProjectCard from '../components/ProjectCard';
+import { Project } from '@/data/projects';
 
-export const metadata = { title: 'Projetos • SigmaEazy' };
+// A função que lê dinamicamente os projetos que o CMS cria
+const getProjects = (): Project[] => {
+  const projectsDirectory = path.join(process.cwd(), 'public/content/projects');
 
+  if (!fs.existsSync(projectsDirectory)) {
+    console.warn("Diretório de projetos não encontrado. Crie 'public/content/projects' e adicione projetos via CMS.");
+    return [];
+  }
+
+  const fileNames = fs.readdirSync(projectsDirectory);
+
+  const allProjectsData = fileNames
+    .filter((fileName) => fileName.endsWith('.md')) // Garante que estamos lendo apenas arquivos markdown
+    .map((fileName) => {
+      const slug = fileName.replace(/\.md$/, '');
+      const fullPath = path.join(projectsDirectory, fileName);
+      const fileContents = fs.readFileSync(fullPath, 'utf8');
+      const { data, content } = matter(fileContents);
+
+      return {
+        slug: data.slug || slug,
+        name: data.name,
+        summary: data.summary,
+        stack: data.stack ? String(data.stack).split(',').map((item: string) => item.trim()) : [],
+        href: data.href,
+        status: data.status,
+        detailsMd: content,
+      } as Project;
+    });
+
+  return allProjectsData;
+};
+
+// A página que renderiza a lista
 export default function ProjetosPage() {
+  const projects = getProjects();
+
   return (
-    <>
-      <Header />
-      <main style={{ padding: 24, maxWidth: 960, margin: '0 auto' }}>
-        <h1>🧩 Projetos</h1>
-        <p style={{ color: '#9aa' }}>Módulos do Gota Ecosystem que estou construindo.</p>
-
-        <ul style={{ listStyle: 'none', padding: 0, marginTop: 24 }}>
-          {projects.map((p) => (
-            <li
-              key={p.name}
-              style={{
-                margin: '12px 0',
-                padding: 16,
-                border: '1px solid #333',
-                borderRadius: 12,
-                background: '#0c0f14',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                <strong style={{ fontSize: 18 }}>{p.name}</strong>
-                <span style={{ color: '#8aa' }}>{p.status}</span>
-              </div>
-
-              <p style={{ marginTop: 8 }}>{p.summary}</p>
-
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-                {p.stack.map((s) => (
-                  <span
-                    key={s}
-                    style={{
-                      fontSize: 12,
-                      padding: '4px 8px',
-                      border: '1px solid #334',
-                      borderRadius: 999,
-                    }}
-                  >
-                    {s}
-                  </span>
-                ))}
-              </div>
-
-              <div style={{ marginTop: 8 }}>
-                <a href={p.href} target="_blank" rel="noreferrer">
-                  ver repositório ↗
-                </a>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </main>
-    </>
+    <section>
+      <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: 'var(--primary)' }}>
+        Projetos
+      </h1>
+      <p style={{ marginBottom: '2.5rem', color: '#aaa' }}>
+        Módulos do Gota Ecosystem que estou construindo via CMS.
+      </p>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+        {projects.length > 0 ? (
+           projects.map((project) => (
+            <ProjectCard key={project.slug} project={project} />
+          ))
+        ) : (
+          <p>Nenhum projeto encontrado. Adicione um novo projeto no painel de administração para vê-lo aqui.</p>
+        )}
+      </div>
+    </section>
   );
 }
